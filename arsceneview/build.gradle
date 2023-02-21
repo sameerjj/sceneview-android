@@ -3,6 +3,9 @@ plugins {
     id 'kotlin-android'
     id 'org.jetbrains.dokka'
 }
+apply plugin: 'maven-publish'
+
+group = 'com.github.sameerjj'
 
 android {
     namespace 'io.github.sceneview.ar'
@@ -62,7 +65,3 @@ dependencies {
     def arcore_version = '1.35.0'
     api "com.google.ar:core:$arcore_version"
 }
-
-apply plugin: 'maven-publish'
-
-group = 'com.github.sameerjj'
