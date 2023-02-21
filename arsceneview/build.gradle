@@ -3,9 +3,6 @@ plugins {
     id 'kotlin-android'
     id 'org.jetbrains.dokka'
 }
-apply plugin: 'maven-publish'
-
-group = 'com.github.sameerjj'
 
 android {
     namespace 'io.github.sceneview.ar'
