@@ -1,13 +1,16 @@
 package io.github.sceneview.sample.armodelviewer
 
+import android.media.MediaRecorder
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isGone
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.ar.core.Anchor
 import com.google.ar.core.Config
 import com.google.ar.core.Plane
@@ -27,6 +30,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     lateinit var sceneView: ARSceneView
     lateinit var loadingView: View
     lateinit var instructionText: TextView
+    lateinit var recordButton: Button
 
     var isLoading = false
         set(value) {
@@ -48,6 +52,16 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 field = value
                 updateInstructions()
             }
+        }
+
+    val fileName by lazy { "${externalCacheDir?.absolutePath}/screen_record.mp4" }
+
+    lateinit var recorder: MediaRecorder
+
+    var isRecording = false
+        set(value) {
+            field = value
+            recordButton.text = if (value) "stop" else "record"
         }
 
     fun updateInstructions() {
@@ -101,6 +115,19 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 this@MainActivity.trackingFailureReason = reason
             }
         }
+
+        recordButton = findViewById<ExtendedFloatingActionButton>(R.id.recordButton).apply {
+            setOnClickListener {
+                isRecording = if (isRecording) {
+                    stopRecording()
+                    false
+                } else {
+                    startRecording()
+                    true
+                }
+            }
+        }
+
     }
 
     fun addAnchorNode(anchor: Anchor) {
@@ -130,5 +157,26 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                     anchorNode = this
                 }
         )
+    }
+
+    fun startRecording() {
+        var width = sceneView.width
+        var height = sceneView.height
+        recorder = MediaRecorder().apply {
+            setVideoSource(MediaRecorder.VideoSource.SURFACE)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setOutputFile(fileName)
+            setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT)
+            setVideoSize(width, height)
+            prepare()
+        }
+        recorder.start()
+        sceneView.startMirroring(recorder.surface, 0 , 0 ,width, height)
+    }
+
+    private fun stopRecording() {
+        sceneView.stopMirroring(recorder.surface)
+        recorder.stop()
+        recorder.release()
     }
 }
