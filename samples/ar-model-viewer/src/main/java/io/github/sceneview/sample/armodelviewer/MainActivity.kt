@@ -3,21 +3,27 @@ package io.github.sceneview.sample.armodelviewer
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isGone
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.ar.core.Anchor
 import com.google.ar.core.Config
 import com.google.ar.core.Plane
 import com.google.ar.core.TrackingFailureReason
+import com.google.ar.sceneform.rendering.ViewRenderable
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.getUpdatedPlanes
 import io.github.sceneview.ar.getDescription
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.math.Position
+import io.github.sceneview.math.Scale
+import io.github.sceneview.model.await
 import io.github.sceneview.node.ModelNode
+import io.github.sceneview.node.ViewNode
 import io.github.sceneview.sample.doOnApplyWindowInsets
 import io.github.sceneview.sample.setFullScreen
 import kotlinx.coroutines.launch
@@ -27,6 +33,8 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
     lateinit var sceneView: ARSceneView
     lateinit var loadingView: View
     lateinit var instructionText: TextView
+    lateinit var recordButton: Button
+    var isAnchorVisible = true
 
     var isLoading = false
         set(value) {
@@ -41,6 +49,8 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                 updateInstructions()
             }
         }
+
+    var viewNode: ViewNode? = null
 
     var trackingFailureReason: TrackingFailureReason? = null
         set(value) {
@@ -78,6 +88,23 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
         })
         instructionText = findViewById(R.id.instructionText)
         loadingView = findViewById(R.id.loadingView)
+
+        recordButton = findViewById<ExtendedFloatingActionButton>(R.id.recordButton).apply {
+            setOnClickListener {
+                val anchorNode = anchorNode ?: return@setOnClickListener
+
+                isAnchorVisible = if (isAnchorVisible) {
+                    anchorNode.isVisible = false
+//                    viewNode?.renderable?.detachView()
+//                    viewNode?.renderable?.view?.visibility = View.GONE
+                    false
+                } else {
+                    anchorNode.isVisible = true
+                    true
+                }
+            }
+        }
+
         sceneView = findViewById<ARSceneView?>(R.id.sceneView).apply {
             planeRenderer.isEnabled = true
             configureSession { session, config ->
@@ -119,12 +146,26 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                                     // Scale to fit in a 0.5 meters cube
                                     scaleToUnits = 0.5f,
                                     // Bottom origin instead of center so the model base is on floor
-                                    centerOrigin = Position(y = -0.5f)
+                                    centerOrigin = Position(y = 1.5f)
                                 ).apply {
                                     isEditable = true
                                 }
                             )
                         }
+                        val renderable = ViewRenderable.builder()
+                            .setView(this@MainActivity, R.layout.view_node_label)
+                            .await(engine)
+                        viewNode = ViewNode(
+                            engine,
+                            sceneView.modelLoader,
+                            sceneView.viewAttachmentManager
+                        ).apply {
+                            setRenderable(renderable)
+                            val scale = 1f
+                            this.scale = Scale(scale, scale, -scale)
+                        }
+                        viewNode?.parent = this@apply
+
                         isLoading = false
                     }
                     anchorNode = this

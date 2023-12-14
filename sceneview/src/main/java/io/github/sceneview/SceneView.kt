@@ -413,9 +413,10 @@ open class SceneView @JvmOverloads constructor(
         }
 
     protected var isDestroyed = false
-    protected val viewAttachmentManager
+    val viewAttachmentManager
         get() = _viewAttachmentManager ?: ViewAttachmentManager(context, this).also {
             _viewAttachmentManager = it
+            it.onResume()
         }
     private val displayHelper = DisplayHelper(context)
     private var swapChain: SwapChain? = null
