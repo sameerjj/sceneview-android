@@ -95,6 +95,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
 
                 isAnchorVisible = if (isAnchorVisible) {
                     anchorNode.isVisible = false
+                    // attempts to force viewNode to disappear
 //                    viewNode?.renderable?.detachView()
 //                    viewNode?.renderable?.view?.visibility = View.GONE
                     false
@@ -162,6 +163,7 @@ class MainActivity : AppCompatActivity(R.layout.activity_main) {
                         ).apply {
                             setRenderable(renderable)
                             val scale = 1f
+                            // need to flip the orientation for text to be readable
                             this.scale = Scale(scale, scale, -scale)
                         }
                         viewNode?.parent = this@apply
